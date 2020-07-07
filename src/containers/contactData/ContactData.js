@@ -23,7 +23,7 @@ const ContactData = (props) => {
                 elementType: 'input',
                 elementConfig: {
                     type: 'email',
-                    placeholder: 'Your Email'
+                    placeholder: 'Your E-mail'
                 },
                 value: ''
             },
@@ -62,7 +62,8 @@ const ContactData = (props) => {
                             value: 'cheapest',
                             displayValue: 'Cheapest'
                         }
-                    ]
+                    ],
+                    value: ''
                 }
             }
         }
@@ -73,11 +74,19 @@ const ContactData = (props) => {
 
     const orderHandler = async(event) => {
         event.preventDefault();
-        setLoading(true)
+        setLoading(true);
+
+        const userContact = {};
+        for(const [key, value] of Object.entries(contact.orderForm)){
+            const obj = {...value}
+            userContact[key] = obj.value
+        }    
+
         const order = {
             ingredients: {
                 ...props.ingredients
             },
+            customer: userContact,
             price: parseFloat(props.price).toFixed(2)
         }
 
@@ -86,20 +95,37 @@ const ContactData = (props) => {
         } catch (error) {
             alert(error.message)
         }
-        setLoading(false)
-        props
-            .history
-            .push('/')
+        
+        props.history.push('/')  
     }
+
+    const inputChangeHandler = (event, fieldName) => {
+        const newInputValue = event.target.value;
+        const newContactState = {...contact};
+        const newFieldValue = {...newContactState.orderForm[fieldName]}
+        newFieldValue.value = newInputValue;
+        newContactState.orderForm[fieldName] = newFieldValue
+        setContact(newContactState)
+    }
+
+    
+    const inputs = Object
+        .keys(contact.orderForm)
+        .map((inputFieldName, index) => {
+            const inputField = contact.orderForm[inputFieldName]
+            return <Input
+                key={index}
+                inputtype={inputField.elementType}
+                config={inputField.elementConfig}
+                value={inputField.value}
+                inputChange={(event) => inputChangeHandler(event, inputFieldName)}/>
+        });
 
     const form = loading
         ? <Spinner/>
         : (
             <form>
-                <Input inputtype='input' type='text' name='name' placeholder='Your name'/>
-                <Input inputtype='input' type='email' name='email' placeholder='Your email'/>
-                <Input inputtype='input' type='text' name='street' placeholder='Street'/>
-                <Input inputtype='input' type='text' name='postal' placeholder='Postal Code'/>
+                {inputs}
                 <Button buttonType='Success' clicked={orderHandler}>ORDER</Button>
             </form>
         )
